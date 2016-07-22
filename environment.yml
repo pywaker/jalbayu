@@ -1,0 +1,4 @@
+name: jalbayu
+dependencies:
+    - python
+    - flask
