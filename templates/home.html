@@ -18,10 +18,18 @@
 
 {% block main %}
 <div class="row">
+    {% for record in records %}
+    <div class="col-md-3">
     <div class="panel panel-default">
       <div class="panel-body">
-        Basic panel example
+        <a href="{{ url_for('static', filename='uploads/' + record.2) }}" class="thumbnail">
+          <img src="{{ url_for('static', filename='uploads/' + record.2) }}" alt="{{ record.1 }}">
+        </a>
+        {{ record.1 }}
+        
       </div>
     </div>
+    </div>
+    {% endfor %}
 </div>
 {% endblock %}

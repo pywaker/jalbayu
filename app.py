@@ -42,8 +42,8 @@ def close_connection(exception):
 def index():
     cur = get_db().cursor()
     cur.execute('SELECT id, name, dataset from dataset')
-    print(cur.fetchall())
-    return render_template('home.html')
+    records = cur.fetchall()
+    return render_template('home.html', records=records)
 
 
 @application.route('/login', methods=['GET', 'POST'])
