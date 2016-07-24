@@ -1,12 +1,20 @@
 # -*- coding: utf-8 -*-
 
+import os
 import sqlite3
+# used to change the filename to secure format
+from werkzeug.utils import secure_filename
 # import Flask from module "flask"
 from flask import Flask, render_template, request, g
 
 
+BASEPATH = os.path.dirname(os.path.abspath(__file__))
+
+print(BASEPATH)
+
 # create a new web application object
 application = Flask(__name__)
+application.config['UPLOAD_FOLDER'] = os.path.join(BASEPATH, 'static/uploads')
 
 
 DATABASE = 'data/db.sqlite3'
@@ -33,6 +41,8 @@ def close_connection(exception):
 @application.route('/')
 def index():
     cur = get_db().cursor()
+    cur.execute('SELECT id, name, dataset from dataset')
+    print(cur.fetchall())
     return render_template('home.html')
 
 
@@ -54,9 +64,16 @@ def add_data():
         # print what we need to save to db
         print(request.form['name'], request.files['datafile'].filename)
         
+        file = request.files['datafile']
+        filename = None
+        if file:
+            filename = secure_filename(file.filename)
+            print(filename)
+            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
+        
         # save submitted details to db
         sql = 'INSERT INTO dataset(name, dataset) VALUES(?, ?)'
-        cur.execute(sql, (request.form['name'], request.files['datafile'].filename))
+        cur.execute(sql, (request.form['name'], filename))
         db.commit()
         
     return render_template('data_add.html')
