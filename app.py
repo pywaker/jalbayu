@@ -12,7 +12,7 @@ application = Flask(__name__)
 # http://localhost:5000/
 @application.route('/')
 def index():
-    return render_template('hello.html')
+    return render_template('home.html')
 
 
 @application.route('/login', methods=['GET', 'POST'])
