@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
 import os
-# import sqlite3
+import sqlite3
 # used to change the filename to secure format
-# from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename
 # import Flask from module "flask"
 from flask import Flask, render_template, request, g, redirect
 from flask_login import (LoginManager, login_user, login_required, logout_user,
@@ -17,9 +17,7 @@ print(BASEPATH)
 
 # create a new web application object
 application = Flask(__name__)
-
-# application configurations
-# application.config['UPLOAD_FOLDER'] = os.path.join(BASEPATH, 'static/uploads')
+application.config['UPLOAD_FOLDER'] = os.path.join(BASEPATH, 'static/uploads')
 application.config['SECRET_KEY'] = 'kaskdjh9213nkwej923fnkwvjnc92kejrvnkv93vkejv93'
 
 
@@ -27,20 +25,31 @@ application.config['SECRET_KEY'] = 'kaskdjh9213nkwej923fnkwvjnc92kejrvnkv93vkejv
 login_manager = LoginManager()
 login_manager.init_app(application)
 
-# DATABASE = 'data/db.sqlite3'
+DATABASE = 'data/db.sqlite3'
+
+
+def get_db():
+    # g._database if g._database exists else None
+    # getattribute
+    db = getattr(g, '_database', None)
+    if db is None:
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+
+@application.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
 
 
 class User:
     
-    users = ({
-        'username': 'test@example.net',
-        'password': 'pass1'          
-    },
-    {
-        'username': 'test2@example.net',
-        'password': 'pass2'          
-    }
-    )
+#    users = ({
+#        'username': 'test@example.net',
+#        'password': 'pass1'          
+#    },)
     authenticated = False
 
     # this will reflect our current loggedin user
@@ -70,18 +79,28 @@ class User:
         cookie to identify user later
         """
         if self.is_authenticated():
-            return self.user['username']
+#            return self.user['username']
+            return self.user['id']
         return None
     
     @staticmethod
     def user_exists(email, password):
-        # check username and password exists in users tuple
-        user_dct = [dct for dct in User.users if dct['username'] == email 
-                    and dct['password'] == password]
-        print("found user", user_dct)
-        if user_dct:
+#        user_dct = [dct for dct in User.users if dct['username'] == email 
+#                    and dct['password'] == password]
+        cur = get_db().cursor()
+        user_sql = "SELECT id, username FROM users WHERE username=? AND password=?"
+        cur.execute(user_sql, (email, password))
+        user_record = cur.fetchone()
+        print("record found", user_record)
+#        print("found user", user_dct)
+#        if user_dct:
+        if user_record:
             user = User()
-            user.user = user_dct[0]
+#            user.user = user_dct[0]
+            user.user = {
+                'id': user_record[0],
+                'username': user_record[1]
+            }
             user.authenticated = True
             return user
         return None
@@ -89,27 +108,20 @@ class User:
 
 @login_manager.user_loader
 def load_user(user_id):
-    user_dct = [dct for dct in User.users if dct['username'] == user_id]
+    cur = get_db().cursor()
+    user_sql = "SELECT id, username FROM users WHERE id=?"
+    cur.execute(user_sql, (user_id,))
+    user_record = cur.fetchone()
+#    user_dct = [dct for dct in User.users if dct['username'] == user_id]
     user = User()
-    user.user = user_dct[0]
+#    user.user = user_dct[0]
+    user.user = {
+        'id': user_record[0],
+        'username': user_record[1]
+    }
     user.authenticated = True
     return user
 
-
-# def get_db():
-#    # g._database if g._database exists else None
-#    # getattribute
-#    db = getattr(g, '_database', None)
-#    if db is None:
-#        db = g._database = sqlite3.connect(DATABASE)
-#    return db
-
-
-# @application.teardown_appcontext
-# def close_connection(exception):
-#    db = getattr(g, '_database', None)
-#    if db is not None:
-#        db.close()
 
 
 # add a new route 
@@ -153,32 +165,32 @@ def logout():
     return redirect('/')
 
 
-#@application.route('/data/add', methods=['GET', 'POST'])
-#@login_required
-#def add_data():
-#    if request.method == 'POST':
-#        # upload data file to server
-#        # save entry into db
-#       db = get_db()
-#        cur = db.cursor()
-#        # print what we need to save to db
-#        print(request.form['name'], request.files['datafile'].filename)
-#        
-#        file = request.files['datafile']
-#        filename = None
-#        if file:
-#            filename = secure_filename(file.filename)
-#            print(filename)
-#            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
-#        
-#        # save submitted details to db
-#        sql = 'INSERT INTO dataset(name, dataset) VALUES(?, ?)'
-#        cur.execute(sql, (request.form['name'], filename))
-#        db.commit()
+@application.route('/data/add', methods=['GET', 'POST'])
+@login_required
+def add_data():
+    if request.method == 'POST':
+        # upload data file to server
+        # save entry into db
+        db = get_db()
+        cur = db.cursor()
+        # print what we need to save to db
+        print(request.form['name'], request.files['datafile'].filename)
         
-#    return render_template('data_add.html')
+        file = request.files['datafile']
+        filename = None
+        if file:
+            filename = secure_filename(file.filename)
+            print(filename)
+            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
+        
+        # save submitted details to db
+        sql = 'INSERT INTO dataset(name, dataset) VALUES(?, ?)'
+        cur.execute(sql, (request.form['name'], filename))
+        db.commit()
+        
+    return render_template('data_add.html')
 
 
 if __name__ == '__main__':
+    
     application.run(debug=True)
-
