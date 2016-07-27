@@ -5,7 +5,8 @@ import sqlite3
 # used to change the filename to secure format
 from werkzeug.utils import secure_filename
 # import Flask from module "flask"
-from flask import Flask, render_template, request, g
+from flask import Flask, render_template, request, g, redirect
+from flask_login import LoginManager, login_user, login_required, logout_user
 
 
 BASEPATH = os.path.dirname(os.path.abspath(__file__))
@@ -15,9 +16,58 @@ print(BASEPATH)
 # create a new web application object
 application = Flask(__name__)
 application.config['UPLOAD_FOLDER'] = os.path.join(BASEPATH, 'static/uploads')
+application.config['SECRET_KEY'] = 'kaskdjh9213nkwej923fnkwvjnc92kejrvnkv93vkejv93'
 
+
+login_manager = LoginManager()
+login_manager.init_app(application)
 
 DATABASE = 'data/db.sqlite3'
+
+
+class User:
+    
+    users = ({
+        'username': 'test@example.net',
+        'password': 'pass1'          
+    },)
+    authenticated = False
+    user = {}
+    
+    def is_authenticated(self):
+        return self.authenticated
+    
+    def is_active(self):
+        return True
+    
+    def is_anonymous(self):
+        return False
+    
+    def get_id(self):
+        if self.is_authenticated():
+            return self.user['username']
+        return None
+    
+    @staticmethod
+    def user_exists(email, password):
+        user_dct = [dct for dct in User.users if dct['username'] == email 
+                    and dct['password'] == password]
+        print("found user", user_dct)
+        if user_dct:
+            user = User()
+            user.user = user_dct[0]
+            user.authenticated = True
+            return user
+        return None
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    user_dct = [dct for dct in User.users if dct['username'] == user_id]
+    user = User()
+    user.user = user_dct[0]
+    user.authenticated = True
+    return user
 
 
 def get_db():
@@ -51,10 +101,24 @@ def login():
     if request.method == 'POST':
         # save this data to db or do something
         print("Posted data", request.form)
+        # check if requested user is in our database
+        user = User.user_exists(request.form['email'], request.form['password'])
+        if user:
+            login_user(user)
+            print("logged in")
+        else:
+            print("Unable to login")
     return render_template('login.html')
 
 
+@application.route('/logout')
+def logout():
+    logout_user()
+    return redirect('/')
+
+
 @application.route('/data/add', methods=['GET', 'POST'])
+@login_required
 def add_data():
     if request.method == 'POST':
         # upload data file to server

@@ -2,3 +2,5 @@ name: jalbayu
 dependencies:
     - python
     - flask
+    - pip:
+        - flask-login
