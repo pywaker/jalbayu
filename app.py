@@ -25,51 +25,6 @@ login_manager.init_app(application)
 DATABASE = 'data/db.sqlite3'
 
 
-class User:
-    
-    users = ({
-        'username': 'test@example.net',
-        'password': 'pass1'          
-    },)
-    authenticated = False
-    user = {}
-    
-    def is_authenticated(self):
-        return self.authenticated
-    
-    def is_active(self):
-        return True
-    
-    def is_anonymous(self):
-        return False
-    
-    def get_id(self):
-        if self.is_authenticated():
-            return self.user['username']
-        return None
-    
-    @staticmethod
-    def user_exists(email, password):
-        user_dct = [dct for dct in User.users if dct['username'] == email 
-                    and dct['password'] == password]
-        print("found user", user_dct)
-        if user_dct:
-            user = User()
-            user.user = user_dct[0]
-            user.authenticated = True
-            return user
-        return None
-
-
-@login_manager.user_loader
-def load_user(user_id):
-    user_dct = [dct for dct in User.users if dct['username'] == user_id]
-    user = User()
-    user.user = user_dct[0]
-    user.authenticated = True
-    return user
-
-
 def get_db():
     # g._database if g._database exists else None
     # getattribute
@@ -84,6 +39,70 @@ def close_connection(exception):
     db = getattr(g, '_database', None)
     if db is not None:
         db.close()
+
+
+class User:
+    
+#    users = ({
+#        'username': 'test@example.net',
+#        'password': 'pass1'          
+#    },)
+    authenticated = False
+    user = {}
+    
+    def is_authenticated(self):
+        return self.authenticated
+    
+    def is_active(self):
+        return True
+    
+    def is_anonymous(self):
+        return False
+    
+    def get_id(self):
+        if self.is_authenticated():
+#            return self.user['username']
+            return self.user['id']
+        return None
+    
+    @staticmethod
+    def user_exists(email, password):
+#        user_dct = [dct for dct in User.users if dct['username'] == email 
+#                    and dct['password'] == password]
+        cur = get_db().cursor()
+        user_sql = "SELECT id, username FROM users WHERE username=? AND password=?"
+        cur.execute(user_sql, (email, password))
+        user_record = cur.fetchone()
+        print("record found", user_record)
+#        print("found user", user_dct)
+#        if user_dct:
+        if user_record:
+            user = User()
+#            user.user = user_dct[0]
+            user.user = {
+                'id': user_record[0],
+                'username': user_record[1]
+            }
+            user.authenticated = True
+            return user
+        return None
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    cur = get_db().cursor()
+    user_sql = "SELECT id, username FROM users WHERE id=?"
+    cur.execute(user_sql, (user_id,))
+    user_record = cur.fetchone()
+#    user_dct = [dct for dct in User.users if dct['username'] == user_id]
+    user = User()
+#    user.user = user_dct[0]
+    user.user = {
+        'id': user_record[0],
+        'username': user_record[1]
+    }
+    user.authenticated = True
+    return user
 
 
 # add a new route 
