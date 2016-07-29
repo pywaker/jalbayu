@@ -191,6 +191,8 @@ def add_data():
                           dataset=filename)
         db.session.add(dataset)
         db.session.commit()
+        flash("Record added successfully", 'success')
+        return redirect('/data/list')
         
     return render_template('data_add.html')
 
@@ -233,6 +235,10 @@ def list_data():
 @application.route('/data/delete/<int:did>')
 @login_required
 def delete_data(did):
+    data = Dataset.query.get(did)
+    db.session.delete(data)
+    db.session.commit()
+    flash("Record removed successfully", 'success')
     return redirect('/data/list')
 
 
