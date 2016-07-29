@@ -195,7 +195,7 @@ def add_data():
     return render_template('data_add.html')
 
 
-@application.route('/data/edit/<int:did>')
+@application.route('/data/edit/<int:did>', methods=['GET', 'POST'])
 @login_required
 def edit_data(did):
     # fetch data
@@ -204,7 +204,22 @@ def edit_data(did):
         flash('Requested record was not found.', 'warning')
         return redirect('/data/add')
     if request.method == 'POST':
-        pass
+        file = request.files['datafile']
+
+        # update name from inputted value
+        dataset.name = request.form['name']
+
+        filename = None
+        if file:
+            filename = secure_filename(file.filename)
+            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
+            
+            # update dataset only if file is uploaded
+            dataset.dataset = filename
+        
+        db.session.add(dataset)
+        db.session.commit()
+        flash("Record updated successfully", 'success')
     return render_template('data_edit.html', dataset=dataset)
 
 
