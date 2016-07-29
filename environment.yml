@@ -2,5 +2,7 @@ name: jalbayu
 dependencies:
     - python
     - flask
+    - sqlalchemy
     - pip:
         - flask-login
+        - flask-sqlalchemy
