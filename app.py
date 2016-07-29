@@ -5,7 +5,7 @@ import os
 # used to change the filename to secure format
 from werkzeug.utils import secure_filename
 # import Flask from module "flask"
-from flask import Flask, render_template, request, g, redirect
+from flask import Flask, render_template, request, g, redirect, flash
 from flask_login import LoginManager, login_user, login_required, logout_user
 from flask_sqlalchemy import SQLAlchemy
 
@@ -193,6 +193,20 @@ def add_data():
         db.session.commit()
         
     return render_template('data_add.html')
+
+
+@application.route('/data/edit/<int:did>')
+@login_required
+def edit_data(did):
+    # fetch data
+    dataset = Dataset.query.get(did)
+    if not dataset:
+        flash('Requested record was not found.', 'warning')
+        return redirect('/data/add')
+    if request.method == 'POST':
+        pass
+    return render_template('data_edit.html', dataset=dataset)
+
 
 
 if __name__ == '__main__':

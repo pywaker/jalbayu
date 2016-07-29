@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+
+{% block main %}
+<div class="row">
+    <div class="col-md-6">
+    <!-- form starts here -->
+        <h1>Update dataset: {{ dataset.id }}</h1>
+        <hr/>
+        <form method="post" action="" enctype="multipart/form-data">
+            <div class="form-group">
+                <label for="name">Name</label>
+                <input type="text" class="form-control" id="name" placeholder="Dataset name" name="name" value="{{ dataset.name }}">
+            </div>
+            <div class="form-group">
+                <label for="datafile">Data File</label>
+                <a href="{{ url_for('static', filename='uploads/' + dataset.dataset) }}" class="thumbnail">
+                  <img src="{{ url_for('static', filename='uploads/' + dataset.dataset) }}" alt="{{ dataset.name }}">
+                </a>
+                <input type="file" class="form-control" id="datafile" name="datafile">
+            </div>
+          
+            <button type="submit" class="btn btn-default">Submit</button>
+        </form>
+    
+    <!-- form ends here -->
+    </div>
+</div>
+{% endblock %}
