@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+
+{% block main %}
+
+<div class="row">
+    <div class="col-md-8">
+        <h1>All Records</h1>
+    </div>
+    <div class="col-md-4">
+        <a href="{{ url_for('add_data') }}" class="btn btn-primary">Add New Record</a>
+    </div>
+</div>
+<div class="row">
+    <div class="col-md-12">
+       <table class="table table-striped">
+           <thead>
+               <tr>
+                   <th>S.N</th>
+                   <th>Name</th>
+                   <th>Dataset</th>
+                   <th>Thumbnail</th>
+                   <th>Action</th>
+               </tr>
+           </thead>
+           <tbody>
+               {% for record in records %}
+               <tr>
+                   <td>{{ record.id }}</td>
+                   <td>{{ record.name }}</td>
+                   <td>{{ record.dataset }}</td>
+                   <td>
+                       <a href="{{ url_for('static', filename='uploads/' + record.dataset) }}" class="thumbnail">
+                  <img src="{{ url_for('static', filename='uploads/' + record.dataset) }}" alt="{{ record.name }}" width="80">
+                </a>
+                   </td>
+                   <td>
+                   <a href="{{ url_for('edit_data', did=record.id)}}" class="btn btn-default">Edit</a>
+                    <a href="{{ url_for('delete_data', did=record.id)}}" class="btn btn-default">Delete</a>
+                   </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+       </table>
+    </div>
+</div>
+{% endblock %}

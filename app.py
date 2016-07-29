@@ -223,6 +223,18 @@ def edit_data(did):
     return render_template('data_edit.html', dataset=dataset)
 
 
+@application.route('/data/list')
+@login_required
+def list_data():
+    records = Dataset.query.all()
+    return render_template('data_list.html', records=records)
+
+
+@application.route('/data/delete/<int:did>')
+@login_required
+def delete_data(did):
+    return redirect('/data/list')
+
 
 if __name__ == '__main__':
     
