@@ -3,6 +3,8 @@ dependencies:
     - python
     - flask
     - sqlalchemy
+    - pandas
+    - matplotlib
     - pip:
         - flask-login
         - flask-sqlalchemy

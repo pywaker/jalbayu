@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import pandas as pd
 # import sqlite3
 # used to change the filename to secure format
 from werkzeug.utils import secure_filename
@@ -184,6 +185,7 @@ def add_data():
 #        cur = db.cursor()
         # print what we need to save to db
         print(request.form['name'], request.files['datafile'].filename)
+        dataset_name = request.form['name']
         
         file = request.files['datafile']
         filename = None
@@ -194,14 +196,31 @@ def add_data():
                 flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
                       'danger')
                 return redirect('data/add')
-            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
+            fullpath = os.path.join(application.config['UPLOAD_FOLDER'], filename)
+            file.save(fullpath)
+            
+            # we work with csv file, generate a png image and save it to database
+            dframe = pd.read_csv(fullpath)
+            dframe = dframe.set_index(["Edition"])
+            print(dframe)
+            
+            # returns a axes object
+            # plt = dframe[["Edition", "Grand Total"]].plot()
+            plt = dframe["Grand Total"].plot(color='red', linewidth=2.5)
+            
+            # '_'.join(request.form['name'].split(' '))
+            fig_name = '_'.join(dataset_name.split(' ')) + '.png'
+            
+            # plt.savefig(fig_name) # if this was a matplotlib plot object
+            fig = plt.get_figure()
+            fig.savefig(os.path.join(application.config['UPLOAD_FOLDER'], fig_name))
         
         # save submitted details to db
 #        sql = 'INSERT INTO dataset(name, dataset) VALUES(?, ?)'
 #        cur.execute(sql, (request.form['name'], filename))
 #        db.commit()
-        dataset = Dataset(name=request.form['name'],
-                          dataset=filename)
+        dataset = Dataset(name=dataset_name,
+                          dataset=fig_name)
         db.session.add(dataset)
         db.session.commit()
         flash("Record added successfully", 'success')
