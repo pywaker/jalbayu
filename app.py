@@ -21,6 +21,8 @@ application.config['SECRET_KEY'] = 'kaskdjh9213nkwej923fnkwvjnc92kejrvnkv93vkejv
 application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASEPATH, 
                                                                             'data/db.sqlite3')
 
+ALLOWED_EXTENSIONS = {'.csv',}
+
 db = SQLAlchemy(application)
 
 login_manager = LoginManager()
@@ -130,6 +132,13 @@ def load_user(user_id):
     return user
 
 
+def allowed_file(filename):
+    """
+    Check if given extension for the file is allowed
+    """
+    return os.path.splitext(filename)[1] in ALLOWED_EXTENSIONS
+
+
 # add a new route 
 # http://localhost:5000/
 @application.route('/')
@@ -181,6 +190,10 @@ def add_data():
         if file:
             filename = secure_filename(file.filename)
             print(filename)
+            if not allowed_file(filename):
+                flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
+                      'danger')
+                return redirect('data/add')
             file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
         
         # save submitted details to db
@@ -214,6 +227,10 @@ def edit_data(did):
         filename = None
         if file:
             filename = secure_filename(file.filename)
+            if not allowed_file(filename):
+                flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
+                      'danger')
+                return redirect('data/edit/' + str(dataset.id))
             file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
             
             # update dataset only if file is uploaded
