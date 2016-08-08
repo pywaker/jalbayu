@@ -117,6 +117,10 @@ class Dataset(db.Model):
 
 @login_manager.user_loader
 def load_user(user_id):
+    """
+    this is used by login manager object to load user object from user_id
+    user_id is obtained from session on consecutive requests
+    """
 #    cur = get_db().cursor()
 #    user_sql = "SELECT id, username FROM users WHERE id=?"
 #    cur.execute(user_sql, (user_id,))
