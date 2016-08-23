@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # import Flask from module "flask"
-from flask import Flask, render_template
+from flask import Flask, render_template, request
 
 
 # create a new web application object
@@ -18,6 +18,14 @@ def index(name):
     """
     # again we are passing name to template
     return render_template('hello.html', name=name)
+
+
+@application.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # save this data to db or do something
+        print("Posted data", request.form)
+    return render_template('login.html')
 
 
 if __name__ == '__main__':
