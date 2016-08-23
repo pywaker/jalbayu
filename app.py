@@ -10,9 +10,14 @@ application = Flask(__name__)
 
 # add a new route 
 # http://localhost:5000/
-@application.route('/')
-def index():
-    return render_template('hello.html')
+@application.route('/hello/<name>')
+def index(name):
+    """
+    this function which is initiated when this route
+    is called, is view function.
+    """
+    # again we are passing name to template
+    return render_template('hello.html', name=name)
 
 
 if __name__ == '__main__':
