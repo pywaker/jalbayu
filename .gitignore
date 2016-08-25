@@ -2,3 +2,5 @@
 .spyderproject
 *.orig
 *.*~
+
+*.sqlite3

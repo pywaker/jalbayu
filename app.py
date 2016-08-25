@@ -112,6 +112,8 @@ def load_user(user_id):
     user_sql = "SELECT id, username FROM users WHERE id=?"
     cur.execute(user_sql, (user_id,))
     user_record = cur.fetchone()
+    if not user_record:
+        return None
 #    user_dct = [dct for dct in User.users if dct['username'] == user_id]
     user = User()
 #    user.user = user_dct[0]
@@ -123,13 +125,35 @@ def load_user(user_id):
     return user
 
 
+@application.route('/initdb')
+def initdb():
+    """
+    this view will initialize database and insert dummy users to it
+    """
+    db = get_db()
+    cur = db.cursor()
+
+    create_sql = """CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                       username TEXT NOT NULL, 
+                                       password TEXT NOT NULL, 
+                                       status INTEGER)"""
+
+    cur.execute(create_sql)
+
+    insert_sql = """INSERT INTO users(username, password, status)
+                    VALUES('test1@example.net', 'pass1', 1),
+                          ('test2@example.net', 'pass2', 1)"""
+    cur.execute(insert_sql)
+    db.commit()
+    return 'OK'
+
 
 # add a new route 
 # http://localhost:5000/
 @application.route('/hello/<name>')
 def index(name):
     """
-    this function which is initiated when this route
+    this view which is initiated when this route
     is called, is view function.
     """
     # again we are passing name to template
@@ -165,32 +189,32 @@ def logout():
     return redirect('/')
 
 
-@application.route('/data/add', methods=['GET', 'POST'])
-@login_required
-def add_data():
-    if request.method == 'POST':
-        # upload data file to server
-        # save entry into db
-        db = get_db()
-        cur = db.cursor()
-        # print what we need to save to db
-        print(request.form['name'], request.files['datafile'].filename)
-        
-        file = request.files['datafile']
-        filename = None
-        if file:
-            filename = secure_filename(file.filename)
-            print(filename)
-            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
-        
-        # save submitted details to db
-        sql = 'INSERT INTO dataset(name, dataset) VALUES(?, ?)'
-        cur.execute(sql, (request.form['name'], filename))
-        db.commit()
-        
-    return render_template('data_add.html')
+#@application.route('/data/add', methods=['GET', 'POST'])
+#@login_required
+#def add_data():
+#    if request.method == 'POST':
+#        # upload data file to server
+#        # save entry into db
+#        db = get_db()
+#        cur = db.cursor()
+#        # print what we need to save to db
+#        print(request.form['name'], request.files['datafile'].filename)
+#        
+#        file = request.files['datafile']
+#        filename = None
+#        if file:
+#            filename = secure_filename(file.filename)
+#            print(filename)
+#            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
+#        
+#        # save submitted details to db
+#        sql = 'INSERT INTO dataset(name, dataset) VALUES(?, ?)'
+#        cur.execute(sql, (request.form['name'], filename))
+#        db.commit()
+#        
+#    return render_template('data_add.html')
 
 
 if __name__ == '__main__':
-    
     application.run(debug=True)
+
