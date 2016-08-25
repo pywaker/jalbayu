@@ -18,10 +18,9 @@ print(BASEPATH)
 
 # create a new web application object
 application = Flask(__name__)
-application.config['UPLOAD_FOLDER'] = os.path.join(BASEPATH, 'static/uploads')
+# application.config['UPLOAD_FOLDER'] = os.path.join(BASEPATH, 'static/uploads')
 application.config['SECRET_KEY'] = 'kaskdjh9213nkwej923fnkwvjnc92kejrvnkv93vkejv93'
-application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASEPATH, 
-                                                                            'data/db.sqlite3')
+application.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASEPATH, 'data/db.sqlite3')
 
 db = SQLAlchemy(application)
 
@@ -51,6 +50,7 @@ login_manager.init_app(application)
 class User(db.Model):
     """
     Model == Model from MVC ( Model View Controller )
+    MVT == Model View Template
     """
     # db attributes
     id = db.Column(db.Integer, primary_key=True)
@@ -58,25 +58,25 @@ class User(db.Model):
     password = db.Column(db.String(60))
     status = db.Column(db.Boolean, default=True)
 
+    def __repr__(self):
+        return self.username
 
-class User:
-    
 #    users = ({
 #        'username': 'test@example.net',
 #        'password': 'pass1'          
 #    },)
 #    authenticated = False
 #    user = {}
-    
+
     def is_authenticated(self):
-	"""
+        """
         return True if user is successfully authenticated/loggedin
         """
-#        return self.authenticated
+        # return self.authenticated
         return self.id and True
-    
+
     def is_active(self):
-	"""
+        """
         check if loggedin user is currently disabled or not
         """
 #        return True
@@ -89,7 +89,7 @@ class User:
         return False
     
     def get_id(self):
-	"""
+        """
         return unique ID of the user, this will be stored in session 
         cookie to identify user later
         """
@@ -122,13 +122,13 @@ class User:
 #        return None
 
 
-class Dataset(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(120), unique=True)
-    dataset = db.Column(db.String(250))
-    
-    def __repr__(self):
-        return self.name
+#class Dataset(db.Model):
+#    id = db.Column(db.Integer, primary_key=True)
+#    name = db.Column(db.String(120), unique=True)
+#    dataset = db.Column(db.String(250))
+#    
+#    def __repr__(self):
+#        return self.name
 
 
 @login_manager.user_loader
@@ -146,7 +146,7 @@ def load_user(user_id):
 #    }
 #    user.authenticated = True
     user = User.query.get(user_id)
-    return user
+    return user or None
 
 
 @application.route('/initdb')
@@ -154,21 +154,27 @@ def initdb():
     """
     this view will initialize database and insert dummy users to it
     """
-    db = get_db()
-    cur = db.cursor()
-
-    create_sql = """CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                       username TEXT NOT NULL, 
-                                       password TEXT NOT NULL, 
-                                       status INTEGER)"""
-
-    cur.execute(create_sql)
-
-    insert_sql = """INSERT INTO users(username, password, status)
-                    VALUES('test1@example.net', 'pass1', 1),
-                          ('test2@example.net', 'pass2', 1)"""
-    cur.execute(insert_sql)
-    db.commit()
+#    db = get_db()
+#    cur = db.cursor()
+#
+#    create_sql = """CREATE TABLE users(id INTEGER PRIMARY KEY AUTOINCREMENT,
+#                                       username TEXT NOT NULL, 
+#                                       password TEXT NOT NULL, 
+#                                       status INTEGER)"""
+#
+#    cur.execute(create_sql)
+#
+#    insert_sql = """INSERT INTO users(username, password, status)
+#                    VALUES('test1@example.net', 'pass1', 1),
+#                          ('test2@example.net', 'pass2', 1)"""
+#    cur.execute(insert_sql)
+#    db.commit()
+    db.create_all()
+    db.session.add(User(username='test1@example.net', 
+                        password='pass1', status=True))
+    db.session.add(User(username='test2@example.net', 
+                        password='pass2', status=True))
+    db.session.commit()
     return 'OK'
 
 
@@ -198,6 +204,7 @@ def login():
 #        user = User.user_exists(request.form['email'], request.form['password'])
         user = User.query.filter_by(username=request.form['email'],
                                     password=request.form['password']).first()
+        print(user)
         if user:
             login_user(user)
             print("logged in")
@@ -215,36 +222,36 @@ def logout():
     return redirect('/')
 
 
-@application.route('/data/add', methods=['GET', 'POST'])
-@login_required
-def add_data():
-    if request.method == 'POST':
-        # upload data file to server
-        # save entry into db
+#@application.route('/data/add', methods=['GET', 'POST'])
+#@login_required
+#def add_data():
+#    if request.method == 'POST':
+#        # upload data file to server
+#        # save entry into db
 #        db = get_db()
 #        cur = db.cursor()
-        # print what we need to save to db
-        print(request.form['name'], request.files['datafile'].filename)
-        
-        file = request.files['datafile']
-        filename = None
-        if file:
-            filename = secure_filename(file.filename)
-            print(filename)
-            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
-        
-        # save submitted details to db
+#        # print what we need to save to db
+#        print(request.form['name'], request.files['datafile'].filename)
+#        
+#        file = request.files['datafile']
+#        filename = None
+#        if file:
+#            filename = secure_filename(file.filename)
+#            print(filename)
+#            file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
+#        
+#        # save submitted details to db
 #        sql = 'INSERT INTO dataset(name, dataset) VALUES(?, ?)'
 #        cur.execute(sql, (request.form['name'], filename))
 #        db.commit()
-        dataset = Dataset(name=request.form['name'],
-                          dataset=filename)
-        db.session.add(dataset)
-        db.session.commit()
-        
-    return render_template('data_add.html')
+#        dataset = Dataset(name=request.form['name'],
+#                          dataset=filename)
+#        db.session.add(dataset)
+#        db.session.commit()
+#        
+#    return render_template('data_add.html')
 
 
 if __name__ == '__main__':
-    
     application.run(debug=True)
+
