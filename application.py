@@ -2,10 +2,12 @@
 
 import os
 # import pandas as pd
-# import sqlite3
+import sqlite3
 # used to change the filename to secure format
 from werkzeug.utils import secure_filename
-# import Flask from module "flask"
+
+## import application modules
+import click
 from flask import Flask, render_template, request, g, redirect, flash
 # from flask_login import LoginManager, login_user, login_required, logout_user
 # from flask_sqlalchemy import SQLAlchemy
@@ -29,23 +31,29 @@ ALLOWED_EXTENSIONS = {'.csv',}
 # login_manager = LoginManager()
 # login_manager.init_app(application)
 
-# DATABASE = 'data/db.sqlite3'
+DATABASE = 'data/db.sqlite3'
 
 
-#def get_db():
-#    # g._database if g._database exists else None
-#    # getattribute
-#    db = getattr(g, '_database', None)
-#    if db is None:
-#        db = g._database = sqlite3.connect(DATABASE)
-#    return db
-#
-#
-#@application.teardown_appcontext
-#def close_connection(exception):
-#    db = getattr(g, '_database', None)
-#    if db is not None:
-#        db.close()
+def get_db():
+    """
+    connect to database if not already connected and
+    return connection object
+    """
+    # g._database if g._database exists else None
+    # getattribute
+    db = getattr(g, '_database', None)
+    if db is None:
+        # g._database = sqlite3.connect(DATABASE)
+        # db = g._database
+        db = g._database = sqlite3.connect(DATABASE)
+    return db
+
+
+@app.teardown_appcontext
+def close_connection(exception):
+    db = getattr(g, '_database', None)
+    if db is not None:
+        db.close()
 
 
 # class User(db.Model):
@@ -151,11 +159,16 @@ def index():
     """
     this route will be run when a user visits main page of our application.
     """
-#    cur = get_db().cursor()
-#    cur.execute('SELECT id, name, dataset from dataset')
-#    records = cur.fetchall()
+    # using hardcoded records
+    # records = [{'name': 'Hello', 'dataset': 'hello.csv'}]
+
+    # get records from database using sql query
+    cur = get_db().cursor()
+    cur.execute('SELECT id, name, dataset from dataset')
+    records = cur.fetchall()
+
+
     # records = Dataset.query.all()
-    records = [{'name': 'Hello', 'dataset': 'hello.csv'}]
     print(records)
     return render_template('home.html', records=records)
 
@@ -286,6 +299,35 @@ def logout():
 #     return redirect('/data/list')
 
 
-if __name__ == '__main__':
-    
-    app.run(debug=True)
+@app.cli.command()
+def initdb():
+    """
+    this is used to initialize database using command line
+    """
+    click.echo("Creating new tables...")
+    db = get_db()
+    db.execute("CREATE TABLE user(id INTEGER, username TEXT, password TEXT, status INTEGER)")
+    db.execute("CREATE TABLE dataset(id INTEGER, name TEXT, dataset TEXT)")
+    db.commit()
+    click.echo("...done")
+
+
+@app.cli.command()
+def populate():
+    """
+    this is used to populate all the database tables using dummy data
+    """
+    click.echo("Loading data...")
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("INSERT INTO user(id, username, password, status) VALUES(?, ?, ?, ?)",
+                (1, 'admin', 'admin123', 1))
+    cur.executemany("INSERT INTO dataset(id, name, dataset) VALUES(?, ?, ?)",
+                    [(1, 'type1', 'type1.csv'), (2, 'type2', 'type2.csv'),
+                     (3, 'type3', 'type3.csv'), (4, 'type4', 'type4.csv'),
+                     (5, 'type5', 'type5.csv'), (6, 'type6', 'type6.csv'),
+                     (7, 'type7', 'type7.csv'), (8, 'type8', 'type8.csv'),
+                     (9, 'type9', 'type9.csv'), (10, 'type10', 'type10.csv')])
+    db.commit()
+    click.echo("...done")
+
