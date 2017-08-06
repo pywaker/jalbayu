@@ -22,11 +22,11 @@
     <div class="col-md-3">
     <div class="panel panel-default">
       <div class="panel-body">
-        <a href="{{ url_for('static', filename='uploads/' + record.2) }}" class="thumbnail">
-          {{ record.2 }}
-          <!-- <img src="{{ url_for('static', filename='uploads/' + record.2) }}" alt="{{ record.name }}">  -->
+        <a href="{{ url_for('static', filename='uploads/' + record.dataset) }}" class="thumbnail"> 
+          {{ record.dataset }}
+          {# <!-- <img src="{{ url_for('static', filename='uploads/' + record.2) }}" alt="{{ record.name }}">  --> #}
         </a>
-        {{ record[1] }}
+        {{record.id}}. {{ record.name }}
         
       </div>
     </div>
