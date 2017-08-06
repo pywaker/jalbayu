@@ -9,7 +9,7 @@ from werkzeug.utils import secure_filename
 ## import application modules
 import click
 from flask import Flask, render_template, request, g, redirect, flash
-# from flask_login import LoginManager, login_user, login_required, logout_user
+from flask_login import LoginManager, login_user, login_required, logout_user
 from flask_sqlalchemy import SQLAlchemy
 # from deprecation import deprecated
 
@@ -28,8 +28,8 @@ ALLOWED_EXTENSIONS = {'.csv',}
 
 db = SQLAlchemy(app)
 
-# login_manager = LoginManager()
-# login_manager.init_app(application)
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 
 # deprecated
@@ -84,45 +84,18 @@ class User(db.Model):
 # #    authenticated = False
 # #    user = {}
     
-#     def is_authenticated(self):
-# #        return self.authenticated
-#         return self.id and True
+    def is_authenticated(self):
+        return self.id and True
     
-#     def is_active(self):
-# #        return True
-#         return self.status
+    def is_active(self):
+#        return True
+        return self.status
     
 #     def is_anonymous(self):
 #         return False
     
-#     def get_id(self):
-#         return self.id
-# #        if self.is_authenticated():
-# ##            return self.user['username']
-# #            return self.user['id']
-# #        return None
-    
-# #    @staticmethod
-# #    def user_exists(email, password):
-# ##        user_dct = [dct for dct in User.users if dct['username'] == email 
-# ##                    and dct['password'] == password]
-# #        cur = get_db().cursor()
-# #        user_sql = "SELECT id, username FROM users WHERE username=? AND password=?"
-# #        cur.execute(user_sql, (email, password))
-# #        user_record = cur.fetchone()
-# #        print("record found", user_record)
-# ##        print("found user", user_dct)
-# ##        if user_dct:
-# #        if user_record:
-# #            user = User()
-# ##            user.user = user_dct[0]
-# #            user.user = {
-# #                'id': user_record[0],
-# #                'username': user_record[1]
-# #            }
-# #            user.authenticated = True
-# #            return user
-# #        return None
+    def get_id(self):
+        return self.id
 
 
 class Dataset(db.Model):
@@ -134,26 +107,15 @@ class Dataset(db.Model):
         return "{}, {}".format(self.name, self.dataset)
 
 
-# @login_manager.user_loader
-# def load_user(user_id):
-#     """
-#     this is used by login manager object to load user object from user_id
-#     user_id is obtained from session on consecutive requests
-#     """
-# #    cur = get_db().cursor()
-# #    user_sql = "SELECT id, username FROM users WHERE id=?"
-# #    cur.execute(user_sql, (user_id,))
-# #    user_record = cur.fetchone()
-# ##    user_dct = [dct for dct in User.users if dct['username'] == user_id]
-# #    user = User()
-# ##    user.user = user_dct[0]
-# #    user.user = {
-# #        'id': user_record[0],
-# #        'username': user_record[1]
-# #    }
-# #    user.authenticated = True
-#     user = User.query.get(user_id)
-#     return user
+@login_manager.user_loader
+def load_user(user_id):
+    """
+    this is used by login manager object to load user object from user_id
+    user_id is obtained from session on consecutive requests
+    """
+    # SELECT id, username FROM users WHERE id=?
+    user = User.query.get(user_id)
+    return user
 
 
 def allowed_file(filename):
@@ -190,9 +152,11 @@ def login():
         # save this data to db or do something
         print("Posted data", request.form)
         # check if requested user is in our database
-#        user = User.user_exists(request.form['email'], request.form['password'])
-        # user = User.query.filter_by(username=request.form['email'],
-        #                             password=request.form['password']).first()
+        # user = User.user_exists(request.form['email'])
+        # SELECT id, username FROM users WHERE username=?
+        user = User.query.filter_by(username=request.form['email']).first()
+        login_user(user)
+        return redirect('/data/list')
         # if user:
         #     # login_user(user)
         #     print("logged in")
@@ -203,7 +167,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    # logout_user()
+    logout_user()
     return redirect('/')
 
 
@@ -293,11 +257,11 @@ def logout():
 #     return render_template('data_edit.html', dataset=dataset)
 
 
-# @application.route('/data/list')
-# @login_required
-# def list_data():
-#     records = Dataset.query.all()
-#     return render_template('data_list.html', records=records)
+@app.route('/data/list')
+@login_required
+def list_data():
+    records = Dataset.query.all()
+    return render_template('data_list.html', records=records)
 
 
 # @application.route('/data/delete/<int:did>')
