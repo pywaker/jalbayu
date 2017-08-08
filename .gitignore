@@ -4,5 +4,6 @@
 static/uploads/
 
 __pycache__/
+.vscode/
 
 env/

@@ -8,7 +8,7 @@
         <h1>All Records</h1>
     </div>
     <div class="col-md-4">
-        <a href="/data/add" class="btn btn-primary">Add New Record</a>{#{{ url_for('add_data') }}#}
+        <a href="{{ url_for('add_data') }}" class="btn btn-primary">Add New Record</a>
     </div>
 </div>
 <div class="row">
@@ -35,8 +35,8 @@
                 </a>
                    </td>
                    <td>
-                   {#<!-- <a href="{{ url_for('edit_data', did=record.id)}}" class="btn btn-default">Edit</a> -->
-                    <!-- <a href="{{ url_for('delete_data', did=record.id)}}" class="btn btn-default">Delete</a> -->#}
+                   <a href="{{ url_for('edit_data', did=record.id)}}" class="btn btn-default">Edit</a>
+                    <a href="{{ url_for('delete_data', did=record.id)}}" class="btn btn-default">Delete</a> 
                    </td>
                 </tr>
                 {% endfor %}

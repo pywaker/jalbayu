@@ -3,6 +3,7 @@
 import os
 # import pandas as pd
 import sqlite3
+from hashlib import sha256 #passlib
 # used to change the filename to secure format
 from werkzeug.utils import secure_filename
 
@@ -76,13 +77,6 @@ class User(db.Model):
     username = db.Column(db.String(32), unique=True)
     password = db.Column(db.String(60))
     status = db.Column(db.Boolean, default=True)
-
-# #    users = ({
-# #        'username': 'test@example.net',
-# #        'password': 'pass1'          
-# #    },)
-# #    authenticated = False
-# #    user = {}
     
     def is_authenticated(self):
         return self.id and True
@@ -91,8 +85,8 @@ class User(db.Model):
 #        return True
         return self.status
     
-#     def is_anonymous(self):
-#         return False
+    def is_anonymous(self):
+        return False
     
     def get_id(self):
         return self.id
@@ -153,15 +147,16 @@ def login():
         print("Posted data", request.form)
         # check if requested user is in our database
         # user = User.user_exists(request.form['email'])
-        # SELECT id, username FROM users WHERE username=?
-        user = User.query.filter_by(username=request.form['email']).first()
-        login_user(user)
-        return redirect('/data/list')
-        # if user:
-        #     # login_user(user)
-        #     print("logged in")
-        # else:
-        #     print("Unable to login")
+        # SELECT id, username FROM users WHERE username=? AND password=?
+        passwrd = sha256(request.form['password'].encode()).hexdigest()
+        user = User.query.filter_by(username=request.form['email'],
+                                    password=passwrd).first()
+        if user:
+            login_user(user)
+            print("logged in")
+            return redirect('/data/list')
+        else:
+            print("Invalid login")
     return render_template('login.html')
 
 
@@ -171,90 +166,88 @@ def logout():
     return redirect('/')
 
 
-# @application.route('/data/add', methods=['GET', 'POST'])
-# @login_required
-# def add_data():
-#     if request.method == 'POST':
-#         # upload data file to server
-#         # save entry into db
-# #        db = get_db()
-# #        cur = db.cursor()
-#         # print what we need to save to db
-#         print(request.form['name'], request.files['datafile'].filename)
-#         dataset_name = request.form['name']
+@app.route('/data/add', methods=['GET', 'POST'])
+@login_required
+def add_data():
+    if request.method == 'POST':
+        # upload data file to server
+        # save entry into db
+        # print what we need to save to db
+        print('='*10)
+        print(request.form['name'], request.files['datafile'].filename)
+        dataset_name = request.form['name']
         
-#         file = request.files['datafile']
-#         filename = None
-#         if file:
-#             filename = secure_filename(file.filename)
-#             print(filename)
-#             if not allowed_file(filename):
-#                 flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
-#                       'danger')
-#                 return redirect('data/add')
-#             fullpath = os.path.join(application.config['UPLOAD_FOLDER'], filename)
-#             file.save(fullpath)
+        file = request.files['datafile']
+        filename = None
+        if file:
+            filename = secure_filename(file.filename)
+            print(filename)
+            print('='*10)
+            if not allowed_file(filename):
+                flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
+                      'danger')
+                return redirect('data/add')
+            fullpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(fullpath)
             
-#             # we work with csv file, generate a png image and save it to database
-#             dframe = pd.read_csv(fullpath)
-#             dframe = dframe.set_index(["Edition"])
-#             print(dframe)
+            # we work with csv file, generate a png image and save it to database
+            dframe = pd.read_csv(fullpath)
+            dframe = dframe.set_index(["Edition"])
+            print(dframe)
             
-#             # returns a axes object
-#             # plt = dframe[["Edition", "Grand Total"]].plot()
-#             plt = dframe["Grand Total"].plot(color='red', linewidth=2.5)
+            # returns a axes object
+            # plt = dframe[["Edition", "Grand Total"]].plot()
+            plt = dframe["Grand Total"].plot(color='red', linewidth=2.5)
             
-#             # '_'.join(request.form['name'].split(' '))
-#             fig_name = '_'.join(dataset_name.split(' ')) + '.png'
+            # '_'.join(request.form['name'].split(' '))
+            fig_name = '_'.join(dataset_name.split(' ')) + '.png'
             
-#             # plt.savefig(fig_name) # if this was a matplotlib plot object
-#             fig = plt.get_figure()
-#             fig.savefig(os.path.join(application.config['UPLOAD_FOLDER'], fig_name))
+            # plt.savefig(fig_name) # if this was a matplotlib plot object
+            fig = plt.get_figure()
+            fig.savefig(os.path.join(application.config['UPLOAD_FOLDER'], fig_name))
         
-#         # save submitted details to db
-# #        sql = 'INSERT INTO dataset(name, dataset) VALUES(?, ?)'
-# #        cur.execute(sql, (request.form['name'], filename))
-# #        db.commit()
-#         dataset = Dataset(name=dataset_name,
-#                           dataset=fig_name)
-#         db.session.add(dataset)
-#         db.session.commit()
-#         flash("Record added successfully", 'success')
-#         return redirect('/data/list')
+        # save submitted details to db
+        dataset = Dataset(name=dataset_name,
+                          dataset=fig_name)
+        db.session.add(dataset)
+        db.session.commit()
+        flash("Record added successfully", 'success')
+        return redirect('/data/list')
         
-#     return render_template('data_add.html')
+    return render_template('data_add.html')
 
 
-# @application.route('/data/edit/<int:did>', methods=['GET', 'POST'])
-# @login_required
-# def edit_data(did):
-#     # fetch data
-#     dataset = Dataset.query.get(did)
-#     if not dataset:
-#         flash('Requested record was not found.', 'warning')
-#         return redirect('/data/add')
-#     if request.method == 'POST':
-#         file = request.files['datafile']
+@app.route('/data/edit/<int:did>', methods=['GET', 'POST'])
+@login_required
+def edit_data(did):
+    # fetch data
+    # select * from dataset where id=?
+    dataset = Dataset.query.get(did)
+    if not dataset:
+        flash('Requested record was not found.', 'warning')
+        return redirect('/data/add')
+    if request.method == 'POST':
+        file = request.files['datafile']
 
-#         # update name from inputted value
-#         dataset.name = request.form['name']
+        # update name from inputted value
+        dataset.name = request.form['name']
 
-#         filename = None
-#         if file:
-#             filename = secure_filename(file.filename)
-#             if not allowed_file(filename):
-#                 flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
-#                       'danger')
-#                 return redirect('data/edit/' + str(dataset.id))
-#             file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
+        filename = None
+        if file:
+            filename = secure_filename(file.filename)
+            if not allowed_file(filename):
+                flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
+                      'danger')
+                return redirect('data/edit/' + str(dataset.id))
+            file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             
-#             # update dataset only if file is uploaded
-#             dataset.dataset = filename
+            # update dataset only if file is uploaded
+            dataset.dataset = filename
         
-#         db.session.add(dataset)
-#         db.session.commit()
-#         flash("Record updated successfully", 'success')
-#     return render_template('data_edit.html', dataset=dataset)
+        db.session.add(dataset)
+        db.session.commit()
+        flash("Record updated successfully", 'success')
+    return render_template('data_edit.html', dataset=dataset)
 
 
 @app.route('/data/list')
@@ -264,14 +257,14 @@ def list_data():
     return render_template('data_list.html', records=records)
 
 
-# @application.route('/data/delete/<int:did>')
-# @login_required
-# def delete_data(did):
-#     data = Dataset.query.get(did)
-#     db.session.delete(data)
-#     db.session.commit()
-#     flash("Record removed successfully", 'success')
-#     return redirect('/data/list')
+@app.route('/data/delete/<int:did>')
+@login_required
+def delete_data(did):
+    data = Dataset.query.get(did)
+    db.session.delete(data)
+    db.session.commit()
+    flash("Record removed successfully", 'success')
+    return redirect('/data/list')
 
 
 @app.cli.command()
@@ -307,7 +300,7 @@ def populate():
     #                  (7, 'type7', 'type7.csv'), (8, 'type8', 'type8.csv'),
     #                  (9, 'type9', 'type9.csv'), (10, 'type10', 'type10.csv')])
     # db.commit()
-    user = User(username='admin', password='admin123', status=1)
+    user = User(username='admin', password=sha256(b'admin123').hexdigest(), status=1)
     db.session.add(user)
     dataset = [(1, 'type1', 'type1.csv'), (2, 'type2', 'type2.csv'),
                      (3, 'type3', 'type3.csv'), (4, 'type4', 'type4.csv'),
