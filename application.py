@@ -2,7 +2,7 @@
 
 import os
 # import pandas as pd
-# from hashlib import sha256 #passlib
+from hashlib import sha256
 # used to change the filename to secure format
 # from werkzeug.utils import secure_filename
 
@@ -40,28 +40,27 @@ as class and its instances.
 
 """
 
-# class User(db.Model):
-#     """
-#     Model == Model from MVC ( Model View Controller )
-#     """
-#     # db attributes
-#     id = db.Column(db.Integer, primary_key=True)
-#     username = db.Column(db.String(32), unique=True)
-#     password = db.Column(db.String(60))
-#     status = db.Column(db.Boolean, default=True)
+class User(db.Model):
+    """
+    Model == Model from MVC ( Model View Controller )
+    """
+    # db attributes
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(32), unique=True)
+    password = db.Column(db.String(60))
+    status = db.Column(db.Boolean, default=True)
     
-#     def is_authenticated(self):
-#         return self.id and True
+    def is_authenticated(self):
+        return self.id and True
     
-#     def is_active(self):
-# #        return True
-#         return self.status
+    def is_active(self):
+        return self.status
     
-#     def is_anonymous(self):
-#         return False
+    def is_anonymous(self):
+        return False
     
-#     def get_id(self):
-#         return self.id
+    def get_id(self):
+        return self.id
 
 
 class Dataset(db.Model):
@@ -254,8 +253,8 @@ def populate():
     this is used to populate all the database tables using dummy data
     """
     click.echo("Loading data...")
-    # user = User(username='admin', password=sha256(b'admin123').hexdigest(), status=1)
-    # db.session.add(user)
+    user = User(username='admin', password=sha256(b'admin123').hexdigest(), status=1)
+    db.session.add(user)
     dataset = [(1, 'type1', 'type1.csv'), (2, 'type2', 'type2.csv'),
                (3, 'type3', 'type3.csv'), (4, 'type4', 'type4.csv'),
                (5, 'type5', 'type5.csv'), (6, 'type6', 'type6.csv'),
