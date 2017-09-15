@@ -22,8 +22,8 @@
     <div class="col-md-3">
     <div class="panel panel-default">
       <div class="panel-body">
-        <a href="{{ url_for('static', filename='uploads/' + record.dataset) }}" class="thumbnail"> 
-          {{ record.dataset }}
+        <a href="{{ url_for('static', filename='uploads/' + record.data) }}" class="thumbnail"> 
+          {{ record.data }}
           {# <!-- <img src="{{ url_for('static', filename='uploads/' + record.2) }}" alt="{{ record.name }}">  --> #}
         </a>
         {{record.id}}. {{ record.name }}
