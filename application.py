@@ -4,13 +4,14 @@ import os
 # import pandas as pd
 from hashlib import sha256
 # used to change the filename to secure format
-# from werkzeug.utils import secure_filename
+from werkzeug.utils import secure_filename
 
 ## import application modules
 import click
 from flask import Flask, render_template, request, g, redirect, flash
-# from flask_login import LoginManager, login_user, login_required, logout_user
+from flask_login import LoginManager, login_user, login_required, logout_user
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm.exc import NoResultFound
 
 
 BASEPATH = os.path.dirname(os.path.abspath(__file__))
@@ -20,16 +21,16 @@ print(BASEPATH)
 # create a new web application object
 app = Flask(__name__)
 
-# app.config['UPLOAD_FOLDER'] = os.path.join(BASEPATH, 'static/uploads')
-# app.config['SECRET_KEY'] = 'kaskdjh9213nkwej923fnkwvjnc92kejrvnkv93vkejv93'
+app.config['UPLOAD_FOLDER'] = os.path.join(BASEPATH, 'static/uploads')
+app.config['SECRET_KEY'] = 'jashdbjabsd82374682734trubjbcuwyebfujwfe823u2rj'
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASEPATH, 'data/db.sqlite3')
 
-# ALLOWED_EXTENSIONS = {'.csv',}
+ALLOWED_EXTENSIONS = {'.csv',}
 
 db = SQLAlchemy(app)
 
-# login_manager = LoginManager()
-# login_manager.init_app(app)
+login_manager = LoginManager()
+login_manager.init_app(app)
 
 """
 ORM (Object Relational Mapper)
@@ -72,22 +73,21 @@ class Dataset(db.Model):
         return "{}, {}".format(self.name, self.data)
 
 
-# @login_manager.user_loader
-# def load_user(user_id):
-#     """
-#     this is used by login manager object to load user object from user_id
-#     user_id is obtained from session on consecutive requests
-#     """
-#     # SELECT id, username FROM users WHERE id=?
-#     user = User.query.get(user_id)
-#     return user
+@login_manager.user_loader
+def load_user(user_id):
+    """
+    this is used by login manager object to load user object from user_id
+    user_id is obtained from session on consecutive requests
+    """
+    user = User.query.get(user_id)
+    return user
 
 
-# def allowed_file(filename):
-#     """
-#     Check if given extension for the file is allowed
-#     """
-#     return os.path.splitext(filename)[1] in ALLOWED_EXTENSIONS
+def allowed_file(filename):
+    """
+    Check if given extension for the file is allowed
+    """
+    return os.path.splitext(filename)[1] in ALLOWED_EXTENSIONS
 
 
 # add a new route 
@@ -112,74 +112,74 @@ def login():
         # save this data to db or do something
         print("Posted data", request.form)
         # check if requested user is in our database
-        # user = User.user_exists(request.form['email'])
-        # SELECT id, username FROM users WHERE username=? AND password=?
-        # passwrd = sha256(request.form['password'].encode()).hexdigest()
-        # user = User.query.filter_by(username=request.form['email'],
-        #                            password=passwrd).first()
-        # if user:
-        #     login_user(user)
-        #     print("logged in")
-        #     return redirect('/data/list')
-        # else:
-        #     print("Invalid login")
-        pass
+        passwrd = sha256(request.form['password'].encode()).hexdigest()
+        try:
+            user = User.query.filter_by(username=request.form['email'],
+                                        password=passwrd).one()
+        except NoResultFound:
+            flash("Invalid Username or password", 'danger')
+            return redirect('/login')
+        else:
+            login_user(user)
+            print("logged in")
+            return redirect('/data/list')
     return render_template('login.html')
 
 
 @app.route('/logout')
 def logout():
-    # logout_user()
+    logout_user()
     return redirect('/')
 
 
 @app.route('/data/add', methods=['GET', 'POST'])
-# @login_required
+@login_required
 def add_data():
-    # if request.method == 'POST':
-    #     # upload data file to server
-    #     # save entry into db
-    #     # print what we need to save to db
-    #     print('='*10)
-    #     print(request.form['name'], request.files['datafile'].filename)
-    #     dataset_name = request.form['name']
+    if request.method == 'POST':
+        # upload data file to server
+        # save entry into db
+        # print what we need to save to db
+        print('='*10)
+        print(request.form['name'], request.files['datafile'].filename)
+        dataset_name = request.form['name']
         
-    #     file = request.files['datafile']
-    #     filename = None
-    #     if file:
-    #         filename = secure_filename(file.filename)
-    #         print(filename)
-    #         print('='*10)
-    #         if not allowed_file(filename):
-    #             flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
-    #                   'danger')
-    #             return redirect('data/add')
-    #         fullpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    #         file.save(fullpath)
+        file = request.files['datafile']
+        filename = None
+        if file:
+            filename = secure_filename(file.filename)
+            print(filename)
+            print('='*10)
+            if not allowed_file(filename):
+                flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
+                      'danger')
+                return redirect('data/add')
+            fullpath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            print(fullpath)
+            file.save(fullpath)
             
-    #         # we work with csv file, generate a png image and save it to database
-    #         dframe = pd.read_csv(fullpath)
-    #         dframe = dframe.set_index(["Edition"])
-    #         print(dframe)
+            # we work with csv file, generate a png image and save it to database
+            # dframe = pd.read_csv(fullpath)
+            # dframe = dframe.set_index(["Edition"])
+            # print(dframe)
             
-    #         # returns a axes object
-    #         # plt = dframe[["Edition", "Grand Total"]].plot()
-    #         plt = dframe["Grand Total"].plot(color='red', linewidth=2.5)
+            # # returns a axes object
+            # # plt = dframe[["Edition", "Grand Total"]].plot()
+            # plt = dframe["Grand Total"].plot(color='red', linewidth=2.5)
             
-    #         # '_'.join(request.form['name'].split(' '))
-    #         fig_name = '_'.join(dataset_name.split(' ')) + '.png'
+            # # '_'.join(request.form['name'].split(' '))
+            # fig_name = '_'.join(dataset_name.split(' ')) + '.png'
             
-    #         # plt.savefig(fig_name) # if this was a matplotlib plot object
-    #         fig = plt.get_figure()
-    #         fig.savefig(os.path.join(application.config['UPLOAD_FOLDER'], fig_name))
+            # # plt.savefig(fig_name) # if this was a matplotlib plot object
+            # fig = plt.get_figure()
+            # fig.savefig(os.path.join(application.config['UPLOAD_FOLDER'], fig_name))
         
-    #     # save submitted details to db
-    #     dataset = Dataset(name=dataset_name,
-    #                       dataset=fig_name)
-    #     db.session.add(dataset)
-    #     db.session.commit()
-    #     flash("Record added successfully", 'success')
-    #     return redirect('/data/list')
+        # save submitted details to db
+        dataset = Dataset(name=dataset_name,
+                          data=filename)
+        db.session.add(dataset)
+        db.session.commit()
+        flash("Record added successfully", 'success')
+        return redirect('/data/list')
         
     return render_template('data_add.html')
 
@@ -218,10 +218,9 @@ def add_data():
 
 
 @app.route('/data/list')
-# @login_required
+@login_required
 def list_data():
-    # records = Dataset.query.all()
-    records = [{'name': 'Hello', 'dataset': 'hello.csv'}]
+    records = Dataset.query.all()
     return render_template('data_list.html', records=records)
 
 

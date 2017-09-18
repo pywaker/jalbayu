@@ -28,10 +28,10 @@
                <tr>
                    <td>{{ record.id }}</td>
                    <td>{{ record.name }}</td>
-                   <td>{{ record.dataset }}</td>
+                   <td>{{ record.data }}</td>
                    <td>
-                       <a href="{{ url_for('static', filename='uploads/' + record.dataset) }}" class="thumbnail">
-                  <img src="{{ url_for('static', filename='uploads/' + record.dataset) }}" alt="{{ record.name }}" width="80">
+                       <a href="{{ url_for('static', filename='uploads/' + record.data) }}" class="thumbnail">
+                  <img src="{{ url_for('static', filename='uploads/' + record.data) }}" alt="{{ record.name }}" width="80">
                 </a>
                    </td>
                    <td>
