@@ -224,14 +224,14 @@ def list_data():
     return render_template('data_list.html', records=records)
 
 
-# @app.route('/data/delete/<int:did>')
-# @login_required
-# def delete_data(did):
-#     data = Dataset.query.get(did)
-#     db.session.delete(data)
-#     db.session.commit()
-#     flash("Record removed successfully", 'success')
-#     return redirect('/data/list')
+@app.route('/data/delete/<int:did>')
+@login_required
+def delete_data(did):
+    data = Dataset.query.get(did)
+    db.session.delete(data)
+    db.session.commit()
+    flash("Record removed successfully", 'success')
+    return redirect('/data/list')
 
 
 @app.cli.command()
