@@ -184,37 +184,37 @@ def add_data():
     return render_template('data_add.html')
 
 
-# @app.route('/data/edit/<int:did>', methods=['GET', 'POST'])
-# @login_required
-# def edit_data(did):
-#     # fetch data
-#     # select * from dataset where id=?
-#     dataset = Dataset.query.get(did)
-#     if not dataset:
-#         flash('Requested record was not found.', 'warning')
-#         return redirect('/data/add')
-#     if request.method == 'POST':
-#         file = request.files['datafile']
+@app.route('/data/edit/<int:did>', methods=['GET', 'POST'])
+@login_required
+def edit_data(did):
+    # fetch data
+    # select * from dataset where id=?
+    dataset = Dataset.query.get(did)
+    if not dataset:
+        flash('Requested record was not found.', 'warning')
+        return redirect('/data/add')
+    if request.method == 'POST':
+        # file = request.files['datafile']
 
-#         # update name from inputted value
-#         dataset.name = request.form['name']
+        # update name from inputted value
+        dataset.name = request.form['name']
 
-#         filename = None
-#         if file:
-#             filename = secure_filename(file.filename)
-#             if not allowed_file(filename):
-#                 flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
-#                       'danger')
-#                 return redirect('data/edit/' + str(dataset.id))
-#             file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        # filename = None
+        # if file:
+        #     filename = secure_filename(file.filename)
+        #     if not allowed_file(filename):
+        #         flash('File is not allowed, Use either of {}'.format(', '.join(ALLOWED_EXTENSIONS)), 
+        #               'danger')
+        #         return redirect('data/edit/' + str(dataset.id))
+        #     file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
             
-#             # update dataset only if file is uploaded
-#             dataset.dataset = filename
+        #     # update dataset only if file is uploaded
+        #     dataset.data = filename
         
-#         db.session.add(dataset)
-#         db.session.commit()
-#         flash("Record updated successfully", 'success')
-#     return render_template('data_edit.html', dataset=dataset)
+        db.session.add(dataset)
+        db.session.commit()
+        flash("Record updated successfully", 'success')
+    return render_template('data_edit.html', dataset=dataset)
 
 
 @app.route('/data/list')
